@@ -1,0 +1,69 @@
+<html>
+<head>
+<meta charset=utf-8" />
+<title>Show iris data base</title>
+         <script type="text/javascript" language="javascript">
+         function YouFrom(form,path){
+          document.forms[form].action=path;
+          document.forms[form].submit();
+         }
+      </script>
+</head>
+   <body>
+
+   <h1>User Data</h1>
+      <table border = 1>
+         <thead>
+            <td>Class_ID</td>
+            <td>name</td>
+            <td>Data_count</td>
+            <td>Update</td>
+            <td>Delets</td>
+         </thead>
+
+         {% for row in class_rows %}
+
+               <tr>
+                  <form id ="class{{row[0]}}"   action="" method = "POST">
+                  <td><input type = "text" name = "class_id" value = {{row[0]}} /></td>
+                  <td><input type = "text" name = "old_name" value = {{row[1]}} /></td>
+                  <td>{{row[2]}}</td>
+                  <td><input type = "text" name = "new_name" /><input name = "update"  type = "button"   value="update"  onclick="YouFrom('form1','http://140.115.59.133:8080/Update_User')"/></td>
+                  <td><input type = "button" name = "delet"  value="delet" onclick="YouFrom('class{{row[0]}}','http://140.115.59.133:8080/Remove_User')"/></td>
+                  </form>
+               </tr>
+
+
+         {% endfor %}
+      </table>
+
+
+   <h1>Iris Data</h1>
+   <table border = 1>
+      <thead>
+         <td>Data_ID</td>
+         <td>User_ID</td>
+         <td>Iris_mask</td>
+         <td>Iris_code</td>
+      </thead>
+
+      {% for row in Data_rows %}
+
+         <tr>
+            <form id = "data{{row[0]}}"  action="" method = "POST">
+            <td><input type = "text" name = "data_ID" value = {{row[0]}} /></td>
+            <td>{{row[1]}}</td>
+            <td><img src="data:image/jpeg;base64,{{row[3]}}" alt="被外星人劫持了～～"/></td>
+            <td><img src="data:image/jpeg;base64,{{row[2]}}" alt="被外星人劫持了～～"/></td>
+            <td><input type = "button" name = "delet"  value="delet" onclick="YouFrom('data{{row[0]}}','http://140.115.59.133:8080/Remove_Data')"/></td>
+            </form>
+         </tr>
+
+      {% endfor %}
+   </table>
+
+   <a href = "/Home">Home</a>
+   <a href = "/logout">logout</a>
+
+   </body>
+</html>

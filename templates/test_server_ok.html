@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Iris recognition server API test</title>
+</head>
+<body>
+    <h1>upload iris image</h1>
+     <form action = "http://140.115.59.133:8080/test_server" method = "POST"
+         enctype = "multipart/form-data">
+         <input type = "file" name = "file" />
+         <input type = "submit" value="提交"/>
+      </form>
+    <h1>Multiplied Quality Score</h1>
+          <table border = 1>
+         <thead>
+            <td>Usable Iris Area</td>
+            <td>Sharpness</td>
+            <td>Grey Scale</td>
+            <td>Pupil Dilation</td>
+            <td>Multiplied Quality Score</td>
+         </thead>
+               <tr>
+                  <td>{{row[0]}}</td>
+                   <td>{{row[1]}}</td>
+                   <td>{{row[2]}}</td>
+                   <td>{{row[3]}}</td>
+                   <td>{{row[4]}}</td>
+               </tr>
+      </table>
+    <h1>upload image</h1>
+        <img src="data:image/jpeg;base64,{{ img_stream1 }}"  width="360" height="240" alt="被外星人劫持了～～"/>
+    <h1>Result</h1>
+    <img src="data:image/jpeg;base64,{{ img_stream2 }}"  width="360" height="240" alt="被外星人劫持了～～"/>
+
+<a href = "/Home">返回主頁</a>
+</body>
+</html>

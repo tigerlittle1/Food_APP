@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js?skin=sunburst"></script>
+    <meta charset="UTF-8">
+    <title>Iris recognition server API</title>
+    <style>
+    li.L0, li.L1, li.L2, li.L3,
+    li.L5, li.L6, li.L7, li.L8 {
+      list-style-type: decimal !important;
+    }
+    </style>
+</head>
+
+<body>
+    <h1>How to use Iris recognition server API</h1>
+    <h2>python</h2>
+    <pre class="prettyprint linenums">
+        <code class="language-python">
+import cv2
+import numpy
+import requests
+from werkzeug.datastructures import ImmutableMultiDict
+
+SERVER_IP = "140.115.59.133"
+API_SERVER = "http://" + SERVER_IP + ":8080"
+DOWNLOAD_IMAGE_API = "/upload"
+try:
+
+    file = open('cls1_10.bmp', 'rb')
+    downloadImageInfoResponse = requests.post(
+            API_SERVER+'/upload',
+            data={
+                'file': 'value_1'
+                # 'Content-Type':"multipart/form-data"
+                # "enctype":"multipart/form-data",
+            },
+            files = [('file',("anana.png",file))]
+        )
+
+    print("iris boundary :",downloadImageInfoResponse.headers["iris"])
+    print("puiple boundary :", downloadImageInfoResponse.headers["puiple"])
+
+    npimg = numpy.frombuffer(downloadImageInfoResponse.content, numpy.uint8)
+    img = cv2.imdecode(npimg, cv2.IMREAD_GRAYSCALE)
+    cv2.imshow("result",img)
+    cv2.waitKey()
+
+except Exception as err:
+    print('Other error occurred %s' % {err})
+        </code>
+    </pre>
+
+    <h2>Android(java)</h2>
+    <h3>Creat UploadImage.java</h3>
+    <pre class="prettyprint linenums">
+        <code class="language-java">
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Log;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+
+
+public class UploadImage {
+    /** * android上傳檔案到伺服器
+     * @param file 需要上傳的檔案(Bitmap)
+     * @param requestURL 請求的rul(string)
+     * @return 返回響應的內容()
+     * 要使用http參考https://blog.csdn.net/CV_Jason/article/details/100043832
+     */
+    public static Response uploadFile(Bitmap file, String name,String requestURL) {
+
+        Log.i("online", "start online");
+        MultipartBody.Builder multipartBodyBuilder = new MultipartBody.Builder().setType(MultipartBody.FORM);
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        file.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+        byte[] byteArray = stream.toByteArray();
+        multipartBodyBuilder.addFormDataPart("file", "Android_Flask_" + 1 + ".bmp", RequestBody.create(MediaType.parse("image/*bmp"), byteArray));
+        RequestBody postBodyImage = multipartBodyBuilder.build();
+        OkHttpClient client = new OkHttpClient();
+
+        Request request = new Request.Builder()
+                .url(requestURL)
+                .post(postBodyImage)
+                .build();
+        Response response = null;
+        try {
+            response = client.newCall(request).execute();
+            Log.i("online", "response code:"+response.toString());
+            return response;
+        }catch (Exception e) {
+            return response;
+        }
+    }
+
+    /** * android取得回復的圖片
+     * @param response 回復的response(Response)
+     * @return 返回Bitmap
+     */
+    public static Bitmap getimage_from_response(Response response)
+    {
+        InputStream inputStream = response.body().byteStream();
+        Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+        return bitmap;
+    }
+}
+        </code>
+    </pre>
+    <h3>In Activity use</h3>
+    <pre class="prettyprint linenums">
+        <code class="language-java">
+    public Mat[] generate_iris_code_online(Mat iris_image, boolean save, String filename, boolean show)
+    {
+
+        Bitmap iris_image_bitmap = Bitmap.createBitmap(iris_image.width(),iris_image.height(),Bitmap.Config.ARGB_8888);
+        iris_image.convertTo(iris_image, CvType.CV_8UC4);//轉換成CV_8UC4
+        org.opencv.android.Utils.matToBitmap(iris_image, iris_image_bitmap);
+
+        Mat img_mask_resize = new Mat();
+        Mat get_image = new Mat();
+
+        Object lock = new Object();
+
+        Runnable r1 = new Runnable() {
+            @Override
+            public void run() {
+                synchronized(lock) {
+                    Response response = UploadImage.uploadFile(iris_image_bitmap,"teat.bmp", "http://140.115.59.133:8080/upload");
+                    Utils.bitmapToMat(UploadImage.getimage_from_response(response), get_image);
+                    get_image.convertTo(get_image, CvType.CV_64F);//轉換成CV_64F
+
+                    String iris_string = response.header("iris").toString();
+                    String puiple_string = response.header("puiple").toString();
+                    String [] iris_string_list = iris_string.split(" ");
+                    String [] puiple_string_list = puiple_string.split(" ");
+
+                    pupil_data = new double[3];
+                    iris_data = new double[3];
+                    pupil_data[0] = Double.parseDouble(puiple_string_list[0]);
+                    pupil_data[1] = Double.parseDouble(puiple_string_list[1]);
+                    pupil_data[2] = Double.parseDouble(puiple_string_list[2]);
+
+                    iris_data[0] = Double.parseDouble(iris_string_list[0]);
+                    iris_data[1] = Double.parseDouble(iris_string_list[1]);
+                    iris_data[2] = Double.parseDouble(iris_string_list[2]);
+
+                    Log.i("online", "response code:"+response.toString());
+                    response.close();
+                    lock.notify();
+                }
+            }
+        };
+
+        Thread get_online_thread = new Thread(r1);
+        get_online_thread.start();
+
+        synchronized(lock) {
+            try {
+                lock.wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        Rect rect_polar = new Rect(0,0,360,60);
+        Rect rect_mask = new Rect(0,60,360,60);
+        Rect rect_code = new Rect(0,120,360,120);
+
+
+
+        Mat polar = new Mat(get_image,rect_polar);
+        Mat mask = new Mat(get_image,rect_mask);
+        mask.push_back(mask);
+        Mat code = new Mat(get_image,rect_code);
+        Mat [] code_mask = {polar,code,mask};
+        return code_mask;
+    }
+        </code>
+    </pre>
+
+<a href = "/test_server">API測試</a>
+</body>
+</html>
