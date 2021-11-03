@@ -30,5 +30,27 @@ def login():
                 response.headers['black'] = "False"
                 return response
 
+@app.route('/', methods=['GET', 'POST'])
+def home():
+    if request.method == 'GET':
+        response = make_response(render_template("login.html"))
+        response.headers['login_state'] = "False"
+        response.headers['black'] = "False"
+        return response
+
+    if request.method == 'POST':
+        user_account = request.form.get('user_account')
+        user_password = request.form.get('user_password')
+        print(user_account, user_password)
+
+        for i in range(len(account)):
+            if user_account == account[i] and user_password == password[i]:
+                return "True"
+            else:
+                response = make_response(render_template("login.html"))
+                response.headers['login_state'] = "False"
+                response.headers['black'] = "False"
+                return response
+
 if __name__ == '__main__':
     app.run(debug=True)
