@@ -7,7 +7,6 @@ password = ["test123"]
 #https://www.itread01.com/article/1516325036.html 不同檔案
 app = Flask(__name__)
 app.secret_key = app.config.get('flask', 'secret_key')
-app.config['UPLOAD_FOLDER'] = 'upload/'
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -32,8 +31,4 @@ def login():
                 return response
 
 if __name__ == '__main__':
-    app.run(
-        host="0.0.0.0",
-        port=int("8000"),
-        debug=True,
-    )
+    app.run(debug=True)
