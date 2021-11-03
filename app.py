@@ -51,4 +51,8 @@ def home():
                 response.headers['login_state'] = "False"
                 response.headers['black'] = "False"
                 return response
-app.run()
+
+
+
+if __name__ == '__main__':
+    app.run()
